@@ -1,4 +1,6 @@
 const STORAGE_KEY = "notizen";
+const EMPTY_NOTE_ERROR = "Bitte gib einen Titel oder einen Text ein.";
+const SAVE_FAILED_ERROR = "Die Änderung konnte nicht dauerhaft gespeichert werden.";
 
 const form = document.getElementById("note-form");
 const titleInput = document.getElementById("note-title");
@@ -8,6 +10,8 @@ const emptyMessage = document.getElementById("empty-message");
 const noteList = document.getElementById("note-list");
 
 let notes = loadNotes();
+// Id of the note currently being edited, or null.
+let editingId = null;
 
 function loadNotes() {
   try {
@@ -29,35 +33,183 @@ function saveNotes() {
   }
 }
 
+function createButton(label, action, className) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.dataset.action = action;
+  button.className = className;
+  return button;
+}
+
+function renderNoteView(note) {
+  const item = document.createElement("li");
+  item.className = "note";
+  item.dataset.id = note.id;
+
+  if (note.title) {
+    const title = document.createElement("h3");
+    title.className = "note-title";
+    title.textContent = note.title;
+    item.append(title);
+  }
+
+  if (note.text) {
+    const text = document.createElement("p");
+    text.className = "note-text";
+    text.textContent = note.text;
+    item.append(text);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "note-actions";
+  actions.append(
+    createButton("Bearbeiten", "edit", "button-secondary"),
+    createButton("Löschen", "delete", "button-danger")
+  );
+  item.append(actions);
+
+  return item;
+}
+
+function renderNoteEditor(note) {
+  const item = document.createElement("li");
+  item.className = "note note-editing";
+  item.dataset.id = note.id;
+
+  const editForm = document.createElement("form");
+  editForm.className = "edit-form";
+  editForm.noValidate = true;
+
+  const titleId = `edit-title-${note.id}`;
+  const textId = `edit-text-${note.id}`;
+
+  const titleLabel = document.createElement("label");
+  titleLabel.htmlFor = titleId;
+  titleLabel.textContent = "Titel";
+
+  const titleField = document.createElement("input");
+  titleField.id = titleId;
+  titleField.type = "text";
+  titleField.name = "title";
+  titleField.autocomplete = "off";
+  titleField.value = note.title;
+
+  const textLabel = document.createElement("label");
+  textLabel.htmlFor = textId;
+  textLabel.textContent = "Text";
+
+  const textField = document.createElement("textarea");
+  textField.id = textId;
+  textField.name = "text";
+  textField.rows = 4;
+  textField.value = note.text;
+
+  const error = document.createElement("p");
+  error.className = "form-error";
+  error.setAttribute("role", "alert");
+
+  const actions = document.createElement("div");
+  actions.className = "note-actions";
+  const saveButton = document.createElement("button");
+  saveButton.type = "submit";
+  saveButton.textContent = "Speichern";
+  saveButton.className = "button-primary";
+  actions.append(saveButton, createButton("Abbrechen", "cancel", "button-secondary"));
+
+  editForm.append(titleLabel, titleField, textLabel, textField, error, actions);
+  item.append(editForm);
+
+  // Enter in the title field submits this form, like in the create form.
+  editForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = titleField.value.trim();
+    const text = textField.value.trim();
+
+    if (!title && !text) {
+      error.textContent = EMPTY_NOTE_ERROR;
+      titleField.focus();
+      return;
+    }
+
+    note.title = title;
+    note.text = text;
+    note.updatedAt = new Date().toISOString();
+    editingId = null;
+    showError(saveNotes() ? "" : SAVE_FAILED_ERROR);
+    renderNotes();
+    focusNoteButton(note.id, "edit");
+  });
+
+  editForm.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      cancelEditing();
+    }
+  });
+
+  const clearError = () => {
+    error.textContent = "";
+  };
+  titleField.addEventListener("input", clearError);
+  textField.addEventListener("input", clearError);
+
+  return item;
+}
+
 function renderNotes() {
   noteList.replaceChildren();
   emptyMessage.hidden = notes.length > 0;
 
   for (const note of notes) {
-    const item = document.createElement("li");
-    item.className = "note";
-
-    if (note.title) {
-      const title = document.createElement("h3");
-      title.className = "note-title";
-      title.textContent = note.title;
-      item.append(title);
-    }
-
-    if (note.text) {
-      const text = document.createElement("p");
-      text.className = "note-text";
-      text.textContent = note.text;
-      item.append(text);
-    }
-
-    noteList.append(item);
+    noteList.append(note.id === editingId ? renderNoteEditor(note) : renderNoteView(note));
   }
+}
+
+function focusNoteButton(id, action) {
+  const item = noteList.querySelector(`[data-id="${CSS.escape(id)}"]`);
+  item?.querySelector(`[data-action="${action}"]`)?.focus();
+}
+
+function startEditing(id) {
+  editingId = id;
+  renderNotes();
+  noteList.querySelector(".note-editing input")?.focus();
+}
+
+function cancelEditing() {
+  const id = editingId;
+  editingId = null;
+  renderNotes();
+  focusNoteButton(id, "edit");
+}
+
+function deleteNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  const name = note.title ? `„${note.title}“` : "diese Notiz";
+  if (!confirm(`Möchtest du ${name} wirklich löschen?`)) return;
+
+  notes = notes.filter((n) => n.id !== id);
+  if (editingId === id) editingId = null;
+  showError(saveNotes() ? "" : SAVE_FAILED_ERROR);
+  renderNotes();
+  titleInput.focus();
 }
 
 function showError(message) {
   errorMessage.textContent = message;
 }
+
+noteList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const id = button.closest(".note").dataset.id;
+
+  if (button.dataset.action === "edit") startEditing(id);
+  else if (button.dataset.action === "delete") deleteNote(id);
+  else if (button.dataset.action === "cancel") cancelEditing();
+});
 
 form.addEventListener("submit", (event) => {
   // The browser also submits the form when Enter is pressed in the title field.
@@ -67,7 +219,7 @@ form.addEventListener("submit", (event) => {
   const text = textInput.value.trim();
 
   if (!title && !text) {
-    showError("Bitte gib einen Titel oder einen Text ein.");
+    showError(EMPTY_NOTE_ERROR);
     titleInput.focus();
     return;
   }
@@ -79,12 +231,7 @@ form.addEventListener("submit", (event) => {
     createdAt: new Date().toISOString(),
   });
 
-  if (!saveNotes()) {
-    showError("Die Notiz konnte nicht dauerhaft gespeichert werden.");
-  } else {
-    showError("");
-  }
-
+  showError(saveNotes() ? "" : SAVE_FAILED_ERROR);
   renderNotes();
   form.reset();
   titleInput.focus();

@@ -128,3 +128,97 @@ h2 {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note-actions button {
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.note-actions button:focus-visible {
+  outline: 2px solid #1f2328;
+  outline-offset: 2px;
+}
+
+.button-primary {
+  color: #fff;
+  background: #2f6fed;
+  border: 1px solid #2f6fed;
+}
+
+.button-primary:hover {
+  background: #2459c7;
+  border-color: #2459c7;
+}
+
+.button-secondary {
+  color: #1f2328;
+  background: #fff;
+  border: 1px solid #c4c8ce;
+}
+
+.button-secondary:hover {
+  background: #eef0f3;
+}
+
+.button-danger {
+  color: #c62828;
+  background: #fff;
+  border: 1px solid #e3b4b4;
+}
+
+.button-danger:hover {
+  background: #fdeeee;
+}
+
+.note-editing {
+  border-color: #2f6fed;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-form label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.edit-form input,
+.edit-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #c4c8ce;
+  border-radius: 6px;
+}
+
+.edit-form textarea {
+  resize: vertical;
+}
+
+.edit-form input:focus,
+.edit-form textarea:focus {
+  outline: 2px solid #2f6fed;
+  outline-offset: 1px;
+  border-color: #2f6fed;
+}
+
+.edit-form .note-actions {
+  margin-top: 0;
+}
