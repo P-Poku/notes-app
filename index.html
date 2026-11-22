@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notizen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>Notizen</h1>
+
+    <form id="note-form" class="note-form" novalidate>
+      <label for="note-title">Titel</label>
+      <input id="note-title" type="text" placeholder="Titel der Notiz" autocomplete="off">
+
+      <label for="note-text">Text</label>
+      <textarea id="note-text" rows="4" placeholder="Was möchtest du notieren?"></textarea>
+
+      <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
+
+      <button type="submit">Notiz speichern</button>
+    </form>
+
+    <section aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Deine Notizen</h2>
+      <p id="empty-message" class="empty-message">Noch keine Notizen. Lege oben deine erste Notiz an.</p>
+      <ul id="note-list" class="note-list"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
