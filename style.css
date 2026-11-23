@@ -97,8 +97,26 @@ h2 {
   color: #5f6670;
 }
 
-.empty-message[hidden] {
+.empty-message[hidden],
+.note[hidden] {
   display: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #c4c8ce;
+  border-radius: 6px;
+}
+
+.search-input:focus {
+  outline: 2px solid #2f6fed;
+  outline-offset: 1px;
+  border-color: #2f6fed;
 }
 
 .note-list {

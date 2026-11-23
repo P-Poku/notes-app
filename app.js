@@ -8,6 +8,8 @@ const textInput = document.getElementById("note-text");
 const errorMessage = document.getElementById("form-error");
 const emptyMessage = document.getElementById("empty-message");
 const noteList = document.getElementById("note-list");
+const searchInput = document.getElementById("search-input");
+const noResultsMessage = document.getElementById("no-results-message");
 
 let notes = loadNotes();
 // Id of the note currently being edited, or null.
@@ -163,6 +165,33 @@ function renderNotes() {
   for (const note of notes) {
     noteList.append(note.id === editingId ? renderNoteEditor(note) : renderNoteView(note));
   }
+
+  applySearch();
+}
+
+function normalize(value) {
+  return value.toLocaleLowerCase("de");
+}
+
+function matchesSearch(note, query) {
+  return normalize(note.title).includes(query) || normalize(note.text).includes(query);
+}
+
+// Hides non-matching notes without re-rendering, so an open editor
+// keeps its unsaved input while the user types in the search field.
+function applySearch() {
+  const query = normalize(searchInput.value.trim());
+  let visibleCount = 0;
+
+  for (const item of noteList.children) {
+    const note = notes.find((n) => n.id === item.dataset.id);
+    // The note being edited stays visible so its changes aren't lost from view.
+    const visible = !query || note.id === editingId || matchesSearch(note, query);
+    item.hidden = !visible;
+    if (visible) visibleCount++;
+  }
+
+  noResultsMessage.hidden = notes.length === 0 || visibleCount > 0;
 }
 
 function focusNoteButton(id, action) {
@@ -239,5 +268,6 @@ form.addEventListener("submit", (event) => {
 
 titleInput.addEventListener("input", () => showError(""));
 textInput.addEventListener("input", () => showError(""));
+searchInput.addEventListener("input", applySearch);
 
 renderNotes();
