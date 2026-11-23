@@ -14,6 +14,9 @@ const noResultsMessage = document.getElementById("no-results-message");
 let notes = loadNotes();
 // Id of the note currently being edited, or null.
 let editingId = null;
+// Id of a note that was just created or saved. It stays visible even if it
+// doesn't match the search, until the search term changes.
+let keepVisibleId = null;
 
 function loadNotes() {
   try {
@@ -138,6 +141,7 @@ function renderNoteEditor(note) {
     note.text = text;
     note.updatedAt = new Date().toISOString();
     editingId = null;
+    keepVisibleId = note.id;
     showError(saveNotes() ? "" : SAVE_FAILED_ERROR);
     renderNotes();
     focusNoteButton(note.id, "edit");
@@ -185,8 +189,10 @@ function applySearch() {
 
   for (const item of noteList.children) {
     const note = notes.find((n) => n.id === item.dataset.id);
-    // The note being edited stays visible so its changes aren't lost from view.
-    const visible = !query || note.id === editingId || matchesSearch(note, query);
+    // The note being edited stays visible so its changes aren't lost from view,
+    // and so does a note that was just created or saved.
+    const visible =
+      !query || note.id === editingId || note.id === keepVisibleId || matchesSearch(note, query);
     item.hidden = !visible;
     if (visible) visibleCount++;
   }
@@ -253,12 +259,14 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   notes.unshift({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    id,
     title,
     text,
     createdAt: new Date().toISOString(),
   });
+  keepVisibleId = id;
 
   showError(saveNotes() ? "" : SAVE_FAILED_ERROR);
   renderNotes();
@@ -268,6 +276,9 @@ form.addEventListener("submit", (event) => {
 
 titleInput.addEventListener("input", () => showError(""));
 textInput.addEventListener("input", () => showError(""));
-searchInput.addEventListener("input", applySearch);
+searchInput.addEventListener("input", () => {
+  keepVisibleId = null;
+  applySearch();
+});
 
 renderNotes();
